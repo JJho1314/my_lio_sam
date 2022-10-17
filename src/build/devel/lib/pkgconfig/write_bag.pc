@@ -1,0 +1,8 @@
+prefix=/home/qian/my_lio_sam/src/build/devel
+
+Name: write_bag
+Description: Description of write_bag
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

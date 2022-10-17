@@ -1,0 +1,8 @@
+prefix=/home/qian/my_lio_sam/src/build/devel
+
+Name: pa_gs02
+Description: Description of pa_gs02
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

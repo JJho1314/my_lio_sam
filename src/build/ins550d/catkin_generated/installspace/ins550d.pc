@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: ins550d
+Description: Description of ins550d
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

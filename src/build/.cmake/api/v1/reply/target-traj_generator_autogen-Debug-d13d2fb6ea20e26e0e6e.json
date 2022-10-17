@@ -1,0 +1,65 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"SmartCar-Tools/map_tools/modules/trajectory_generator/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 0,
+			"id" : "utils::@d8d1e296c1ee9ae77818"
+		}
+	],
+	"id" : "traj_generator_autogen::@ee6149de4fffc8fa0cb2",
+	"isGeneratorProvided" : true,
+	"name" : "traj_generator_autogen",
+	"paths" : 
+	{
+		"build" : "SmartCar-Tools/map_tools/modules/trajectory_generator",
+		"source" : "SmartCar-Tools/map_tools/modules/trajectory_generator"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "build/SmartCar-Tools/map_tools/modules/trajectory_generator/CMakeFiles/traj_generator_autogen",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "build/SmartCar-Tools/map_tools/modules/trajectory_generator/CMakeFiles/traj_generator_autogen.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}

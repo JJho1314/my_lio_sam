@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/iairiv/my_lio_sam/devel/include/**",
+                "/home/iairiv/velodyne_ws/devel/include/**",
+                "/home/iairiv/ros_pkgs/devel/include/**",
+                "/opt/ros/kinetic/include/**",
+                "/home/iairiv/velodyne_ws/src/decode_imu/include/**",
+                "/home/iairiv/ros_pkgs/src/entrance_sign_dectection/include/**",
+                "/home/iairiv/my_lio_sam/src/SmartCar-Tools/map_tools/modules/grid_map_generator/include/**",
+                "/home/iairiv/velodyne_ws/src/hdl_graph_slam/include/**",
+                "/home/iairiv/velodyne_ws/src/hdl_localization/include/**",
+                "/home/iairiv/my_lio_sam/src/ins550d/include/**",
+                "/home/iairiv/ros_pkgs/src/lane_detect_warning/include/**",
+                "/home/iairiv/my_lio_sam/src/LIO-SAM/include/**",
+                "/home/iairiv/my_lio_sam/src/ndt_omp/include/**",
+                "/home/iairiv/my_lio_sam/src/pa_gs02/include/**",
+                "/home/iairiv/velodyne_ws/src/pub_imu/include/**",
+                "/home/iairiv/velodyne_ws/src/pub_loc/include/**",
+                "/home/iairiv/ros_pkgs/src/save_raw_image/include/**",
+                "/home/iairiv/ros_pkgs/src/traffic_light_detect_yolo/include/**",
+                "/home/iairiv/ros_pkgs/src/traffic_light_detection/include/**",
+                "/home/iairiv/my_lio_sam/src/SmartCar-Tools/map_tools/modules/trajectory_generator/include/**",
+                "/home/iairiv/my_lio_sam/src/ukf_localization/include/**",
+                "/home/iairiv/velodyne_ws/src/velodyne/velodyne_driver/include/**",
+                "/home/iairiv/velodyne_ws/src/velodyne/velodyne_laserscan/include/**",
+                "/home/iairiv/velodyne_ws/src/velodyne/velodyne_pointcloud/include/**",
+                "/home/iairiv/ros_pkgs/src/yolo_detection/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

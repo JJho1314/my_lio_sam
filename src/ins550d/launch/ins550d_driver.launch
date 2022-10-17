@@ -1,0 +1,11 @@
+<launch>
+    <!-- IMU relay from serial port to sensor_msgs/Imu -->
+    <node pkg="ins550d" type="ins550d_driver" name="ins550d_driver" output="screen" respawn="true">
+      <param name="imuport" type="string" value="/dev/ttyUSB0" />
+      <!-- <param name="base_point_lat" value="34.2567488" />
+      <param name="base_point_lon" value="108.6494336" /> -->
+      <!-- <param name="base_point_lat" type="double" value="34.2569999" /> -->
+    </node>
+    <!-- Publish static transform from base_footprint to imu_link -->
+    <!--<node pkg="tf" type="static_transform_publisher" name="base_footprint_to_imu_link" args="0 0 0 0 0 3.141592654  /my_base_link /imu_link  100"/>-->
+</launch>

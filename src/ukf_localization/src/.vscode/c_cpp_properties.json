@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/qian/my_lio_sam/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/qian/my_lio_sam/src/SmartCar-Tools/map_tools/modules/grid_map_generator/include/**",
+                "/home/qian/my_lio_sam/src/ins550d/include/**",
+                "/home/qian/my_lio_sam/src/LIO-SAM/include/**",
+                "/home/qian/my_lio_sam/src/ndt_omp/include/**",
+                "/home/qian/my_lio_sam/src/pa_gs02/include/**",
+                "/home/qian/my_lio_sam/src/SmartCar-Tools/map_tools/modules/trajectory_generator/include/**",
+                "/home/qian/my_lio_sam/src/ukf_localization/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14"
+        }
+    ],
+    "version": 4
+}
