@@ -1,0 +1,24 @@
+<launch>
+
+    <arg name="project" default="lio_sam"/>
+
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find lio_sam)/launch/include/rosconsole/rosconsole_error.conf"/>
+    
+    <!-- EKF GPS-->
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_gps" respawn="true">
+        <remap from="odometry/filtered" to="odometry/navsat" />
+    </node>
+
+    <!-- Navsat -->
+    <node pkg="robot_localization" type="navsat_transform_node" name="navsat" respawn="true">
+        <!-- <rosparam param="datum">[40.663476575, -74.5644936733, 0.0, world, base_link]</rosparam>    -->
+        <remap from="imu/data" to="imu/data" />  <!--imu topic-->>
+        <remap from="gps/fix" to="gps/fix" />    <!--GPS topic-->>
+        <remap from="odometry/filtered" to="odometry/navsat" />
+    </node>
+
+    
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 base_link gps_base_link" respawn="true"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="link2_broadcaster" args="0 0 0 0 0 0 1 gps_base_link navsat_link" respawn="true"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="link3_broadcaster" args="0 0 0 0 0 0 1 map gps_odom" respawn="true"/> -->
+</launch>

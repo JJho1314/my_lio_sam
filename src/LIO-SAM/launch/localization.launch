@@ -1,0 +1,28 @@
+<launch>
+
+    <arg name="project" default="lio_sam"/>
+    
+    <!-- Parameters -->
+    <rosparam file="$(find lio_sam)/config/params.yaml" command="load" />
+
+    <!--- LOAM -->
+    <include file="$(find lio_sam)/launch/include/module_localization.launch" />
+
+    <!--- Robot State TF -->
+    <include file="$(find lio_sam)/launch/include/module_robot_state_publisher.launch" />
+
+    <!--- Run Navsat -->
+    <!-- <include file="$(find lio_sam)/launch/include/module_navsat.launch" /> -->
+    <!--- Run IMU -->
+     <!-- <include file="$(find ins550d)/launch/demo.launch" /> -->
+     <!-- <include file="$(find imu1000)/launch/imu1000.launch" /> -->
+    <!--- Run lidar -->
+     <!-- <include file="$(find rslidar_pointcloud)/launch/rs_lidar_16.launch" /> -->
+    <!--- Run Rviz-->
+    <node pkg="rviz" type="rviz" name="$(arg project)_rviz" args="-d $(find lio_sam)/launch/include/config/localization.rviz" />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="rslidar_broadcaster" args="0.0535265 -1.19071 -1.28882 0 0 -0 1 slam_base_link velodyne" respawn="true"/> -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 1 map slam_map" respawn="true"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="link2_broadcaster" args="0 0 0 0 0 0 1 base_link slam_base_link" respawn="true"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="link3_broadcaster" args="0 0 0 0 0 0 1 odom slam_odom" respawn="true"/> -->
+
+</launch>
