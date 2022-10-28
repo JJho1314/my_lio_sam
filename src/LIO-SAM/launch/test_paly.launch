@@ -1,0 +1,8 @@
+  <launch>
+    <!-- rosbag play -->
+    <param name="use_sim_time" value="true"/>
+    <node pkg="rosbag" type="play" name="rosbag_play" args="-r 1.0 --clock /home/qian/data/test2.bag" required="true"/>
+
+    <!-- T_IL -->
+    <node pkg="tf" type="static_transform_publisher" name="velodyne" args="0 0 0 0 0 0 base_link velodyne 100"/>
+</launch>

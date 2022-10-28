@@ -1,0 +1,32 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/qian/my_lio_sam/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/qian/my_lio_sam/src/ros_canopen/canopen_402/include/**",
+                "/home/qian/my_lio_sam/src/ros_canopen/canopen_chain_node/include/**",
+                "/home/qian/my_lio_sam/src/ros_canopen/canopen_master/include/**",
+                "/home/qian/my_lio_sam/src/ros_canopen/canopen_motor_node/include/**",
+                "/home/qian/my_lio_sam/src/hdl_localization/include/**",
+                "/home/qian/my_lio_sam/src/imu1000/include/**",
+                "/home/qian/my_lio_sam/src/lidar_align/include/**",
+                "/home/qian/my_lio_sam/src/LIO-SAM/include/**",
+                "/home/qian/my_lio_sam/src/ndt_omp/include/**",
+                "/home/qian/my_lio_sam/src/ros_canopen/socketcan_bridge/include/**",
+                "/home/qian/my_lio_sam/src/ros_canopen/socketcan_interface/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14"
+        }
+    ],
+    "version": 4
+}

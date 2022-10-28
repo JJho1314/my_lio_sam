@@ -1,0 +1,9 @@
+<launch>
+    <!--- Run IMU -->
+    <!-- <include file="$(find ins550d)/launch/demo.launch" /> -->
+     <include file="$(find imu1000)/launch/imu1000.launch" />
+    <!--- Run lidar -->
+    <include file="$(find rslidar_pointcloud)/launch/rs_lidar_16.launch" />
+
+    <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find rslidar_pointcloud)/rviz_cfg/rslidar.rviz" />
+</launch>
