@@ -199,6 +199,7 @@ public:
                  // 按照曲率从小到大排序
                 std::sort(cloudSmoothness.begin()+sp, cloudSmoothness.begin()+ep, by_value());
 
+
                 int largestPickedNum = 0; // 被提取特征点的数量
                 for (int k = ep; k >= sp; k--)
                 {
