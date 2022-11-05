@@ -338,7 +338,7 @@ public:
         // #pragma omp parallel for num_threads(numberOfCores)
         for (size_t i = 0; i < cloud_in.points.size(); ++i)
         {
-            if (sqrt(cloud_in.points[i].x * cloud_in.points[i].x + cloud_in.points[i].y * cloud_in.points[i].y) < max_range || cloud_in.points[i].z > 10)
+            if (sqrt((cloud_in.points[i].x - transformTobeMapped[3]) * (cloud_in.points[i].x - transformTobeMapped[3]) + (cloud_in.points[i].y - transformTobeMapped[4]) * (cloud_in.points[i].y - transformTobeMapped[4])) > max_range || cloud_in.points[i].z > 10)
                 continue;
             cloud_out.points[j] = cloud_in.points[i];
             j++;
@@ -389,7 +389,7 @@ public:
             kdtreeCornerFromMap->setInputCloud(laserCloudCornerFromMapDS);
             kdtreeSurfFromMap->setInputCloud(laserCloudSurfFromMapDS);
 
-            *globalMap = *laserCloudCornerFromMapDS;
+            *globalMap = *laserCloudCornerFromMapDS + *laserCloudSurfFromMap;
 
             // if(Matching_method=="ndt")
             //     registration->setInputTarget(globalMap);
