@@ -185,7 +185,7 @@ public:
         pubPath = nh.advertise<nav_msgs::Path>("lio_sam/mapping/path", 1);                                         // 发布路径
 
         subCloud = nh.subscribe<lio_sam::cloud_info>("lio_sam/feature/cloud_info", 1, &mapOptimization::laserCloudInfoHandler, this, ros::TransportHints().tcpNoDelay());
-        subGPS = nh.subscribe<nav_msgs::Odometry>(gpsTopic, 200, &mapOptimization::gpsHandler, this, ros::TransportHints().tcpNoDelay());
+        // subGPS = nh.subscribe<nav_msgs::Odometry>(gpsTopic, 200, &mapOptimization::gpsHandler, this, ros::TransportHints().tcpNoDelay());
         subUKF = nh.subscribe<nav_msgs::Odometry>("ukf/odom", 1, &mapOptimization::UKFHandler, this, ros::TransportHints().tcpNoDelay());
 
         pubCloudRegisteredRaw = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/cloud_registered_raw", 1);
@@ -273,6 +273,8 @@ public:
         //动态加载地图
         all_Corner_areas = read_arealist(globalCornerMap_pcd);
         all_Surf_areas = read_arealist(globalSurfMap_pcd);
+        std::cout << "角点地图张： " << all_Corner_areas.size() << std::endl;
+        std::cout << "面点地图张： " << all_Surf_areas.size() << std::endl;
 
         if (margin < 0) // margin<0，说明不更新，那么加载全部pcd文件
         {
@@ -336,8 +338,7 @@ public:
         // #pragma omp parallel for num_threads(numberOfCores)
         for (size_t i = 0; i < cloud_in.points.size(); ++i)
         {
-            if (cloud_in.points[i].x < limit_xl || cloud_in.points[i].x > limit_xr ||
-                cloud_in.points[i].y < limit_yl || cloud_in.points[i].x > limit_yr || cloud_in.points[i].z > 10)
+            if (sqrt(cloud_in.points[i].x * cloud_in.points[i].x + cloud_in.points[i].y * cloud_in.points[i].y) < max_range || cloud_in.points[i].z > 10)
                 continue;
             cloud_out.points[j] = cloud_in.points[i];
             j++;
@@ -380,7 +381,7 @@ public:
 
             // pass.setInputCloud (laserCloudSurfFromMap);
             // pass.filter (*laserCloudSurfFromMapDS);
-
+            std::cout << "当前坐标" << pose[3] << "," << pose[4] << std::endl;
             myPassThrough(*laserCloudCornerFromMap, *laserCloudCornerFromMapDS,
                           pose[3] - max_range - 5, pose[3] + max_range + 5, pose[4] - max_range - 5, pose[4] + max_range + 5);
             myPassThrough(*laserCloudSurfFromMap, *laserCloudSurfFromMapDS,
@@ -485,7 +486,7 @@ public:
         // For each point in the source dataset
         int nr = 0;
         kdtreeCornerFromMap->setInputCloud(laserCloudCornerFromMapDS);
-        #pragma omp parallel for num_threads(numberOfCores)
+#pragma omp parallel for num_threads(numberOfCores)
         for (size_t i = 0; i < input_cloud->size(); ++i)
         {
             PointType pointOri, pointSel;
@@ -913,9 +914,9 @@ public:
 
         Eigen::Affine3f transCur = pcl::getTransformation(transformIn->x, transformIn->y, transformIn->z, transformIn->roll, transformIn->pitch, transformIn->yaw);
 
-        // https://blog.csdn.net/bigFatCat_Tom/article/details/98493040
-        // 使用多线程并行加速
-        #pragma omp parallel for num_threads(numberOfCores)
+// https://blog.csdn.net/bigFatCat_Tom/article/details/98493040
+// 使用多线程并行加速
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < cloudSize; ++i)
         {
             pointFrom = &cloudIn->points[i];
@@ -1080,7 +1081,7 @@ public:
     {
         updatePointAssociateToMap();
 
-    #pragma omp parallel for num_threads(numberOfCores)
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < laserCloudCornerLastDSNum; i++)
         {
             PointType pointOri, pointSel, coeff;
@@ -1222,7 +1223,7 @@ public:
     {
         updatePointAssociateToMap();
 
-        #pragma omp parallel for num_threads(numberOfCores)
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < laserCloudSurfCurDSNum; i++)
         {
             PointType pointOri, pointSel, coeff;
@@ -1319,7 +1320,7 @@ public:
     void surfOptimizationScan()
     {
 
-        #pragma omp parallel for num_threads(numberOfCores)
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < laserCloudSurfCurDSNum; i++)
         {
             PointType pointOri, pointSel, coeff;

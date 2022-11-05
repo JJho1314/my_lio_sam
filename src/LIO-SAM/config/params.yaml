@@ -1,23 +1,24 @@
 globalmap_server:
-  globalSurfMap_dirctory: "/home/iairiv/my_lio_sam/pcd_map_32/Surf_map/"
-  globalSurfMap_pcd: "/home/iairiv/my_lio_sam/pcd_map_32/Surf_map/pcd_info.csv"
-  globalCornerMap_dirctory: "/home/iairiv/my_lio_sam/pcd_map_32/Corner_map/"
-  globalCornerMap_pcd: "/home/iairiv/my_lio_sam/pcd_map_32/Corner_map/pcd_info.csv"
+  globalSurfMap_dirctory: "/home/jjho/map_campus/map/Surf_map/"
+  globalSurfMap_pcd: "/home/jjho/map_campus/map/Surf_map/pcd_info.csv"
+  globalCornerMap_dirctory: "/home/jjho/map_campus/map/Corner_map/"
+  globalCornerMap_pcd: "/home/jjho/map_campus/map/Corner_map/pcd_info.csv"
   area_size: 50
   margin: 100
   updateMapFrequency: 10
   ndt_neighbor_search_method: "DIRECT7" #if NDT is slow for your PC, try DIRECT1 serach method, which is a bit unstable but extremely fast
   ndt_resolution: 0.5
   Matching_method: "loam"    # loam or ndt
-  intialMethod: "gps"  # gps  human
-  initialPose: [0,0,0]
-  optimization_with_GPS: true
+  intialMethod: "human"  # gps  human
+  initialPose: [ -175.839205868,  65.71887691,-1.38476089371]
+  # initialPose: [ -152.852279663, -330,-1.38476089371]
+  optimization_with_GPS: false
   initial_count_num: 5
 
 lio_sam:
 
-  PickedSurfNum: 100    #定位10=个点, 给规划建图100
-  PickedCornerNum: 20   #定位5=个点，给规划建图20
+  PickedSurfNum: 10    #定位10=个点, 给规划建图100
+  PickedCornerNum: 5   #定位5=个点，给规划建图20
 
   # Topics
   # pointCloudTopic: "velodyne_points"               # Point cloud data 
@@ -40,7 +41,7 @@ lio_sam:
   
   # Export settings
   savePCD: true                                         # https://github.com/TixiaoShan/LIO-SAM/issues/3
-  savePCDDirectory: "/workspace/my_lio_sam/map_cheku/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
+  savePCDDirectory: "/my_lio_sam/map_cheku/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
 
   # N_SCAN: 128                                 # number of lidar channel (i.e., 16, 32, 64, 128)
   # Horizon_SCAN: 1800                          # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048)
@@ -78,7 +79,7 @@ lio_sam:
   ang_bottom: 15.0
   Vertical_angle: 30.0
   min_range: 1.8     #default 1.0
-  max_range: 100.0   # DO NOT BE TOO SMALL
+  max_range: 50.0   # DO NOT BE TOO SMALL
   area_num: 6        #default 6
   iter_num: 20   #default 30
   distance_limit: 10000.0  # 50*50
@@ -123,7 +124,7 @@ lio_sam:
 
   # LOAM feature threshold
   edgeThreshold: 1.0
-  surfThreshold: 0.1   # 定位 0.01  建图0.1
+  surfThreshold: 0.01   # 定位 0.01  建图0.1
   edgeFeatureMinValidNum: 10
   surfFeatureMinValidNum: 100
 
@@ -155,7 +156,7 @@ lio_sam:
   historyKeyframeSearchRadius: 15.0             # meters, key frame that is within n meters from current pose will be considerd for loop closure
   historyKeyframeSearchTimeDiff: 30.0           # seconds, key frame that is n seconds older will be considered for loop closure
   historyKeyframeSearchNum: 25                  # number of hostory key frames will be fused into a submap for loop closure
-  historyKeyframeFitnessScore: 0.5              # icp threshold, the smaller the better alignment
+  historyKeyframeFitnessScore: 2                # icp threshold, the smaller the better alignment
 
   # Visualization
   globalMapVisualizationSearchRadius: 1000.0    # meters, global map visualization radius
