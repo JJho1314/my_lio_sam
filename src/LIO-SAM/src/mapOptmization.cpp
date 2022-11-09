@@ -474,6 +474,8 @@ public:
 
             scan2MapOptimization();
 
+            // saveKeyFramesAndFactor();
+
             // 外参标定
             if (Calib_flag)
             {
@@ -486,7 +488,7 @@ public:
                 lidar_cali.push(tmp);
             }
 
-            if (initial_count > 20)
+            if (initial_count > 10)
             {
                 saveKeyFramesAndFactor();
                 initial_count = 100;

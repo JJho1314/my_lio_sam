@@ -1,23 +1,23 @@
 globalmap_server:
-  globalSurfMap_dirctory: "/home/iairiv/my_lio_sam/pcd_map_32/Surf_map/"
-  globalSurfMap_pcd: "/home/iairiv/my_lio_sam/pcd_map_32/Surf_map/pcd_info.csv"
-  globalCornerMap_dirctory: "/home/iairiv/my_lio_sam/pcd_map_32/Corner_map/"
-  globalCornerMap_pcd: "/home/iairiv/my_lio_sam/pcd_map_32/Corner_map/pcd_info.csv"
+  globalSurfMap_dirctory: "/home/jjho/map_campus/Surf_map/"
+  globalSurfMap_pcd: "/home/jjho/map_campus/Surf_map/pcd_info.csv"
+  globalCornerMap_dirctory: "/home/jjho/map_campus/Corner_map/"
+  globalCornerMap_pcd: "/home/jjho/map_campus/Corner_map/pcd_info.csv"
   area_size: 50
   margin: 100
   updateMapFrequency: 10
   ndt_neighbor_search_method: "DIRECT7" #if NDT is slow for your PC, try DIRECT1 serach method, which is a bit unstable but extremely fast
   ndt_resolution: 0.5
   Matching_method: "loam"    # loam or ndt
-  intialMethod: "gps"  # gps  human
-  initialPose: [0,0,0]
-  optimization_with_GPS: true
+  intialMethod: "human"  # gps  human
+  initialPose: [-51.0476009806,80.227463481,0]
+  optimization_with_GPS: false
   initial_count_num: 5
 
 lio_sam:
 
-  PickedSurfNum: 100    #定位10=个点, 给规划建图100
-  PickedCornerNum: 20   #定位5=个点，给规划建图20
+  PickedSurfNum: 50    #定位10=个点, 给规划建图100
+  PickedCornerNum: 10   #定位5=个点，给规划建图20
 
   # Topics
   # pointCloudTopic: "velodyne_points"               # Point cloud data 
@@ -36,11 +36,11 @@ lio_sam:
   useImuHeadingInitialization: true           # if using GPS data, set to "true"
   useGpsElevation: false                      # 海拔高度，是否使用gps确定z的位置if GPS elevation is bad, set to "false"
   gpsCovThreshold: 1.0                        # m^2, threshold for using GPS data
-  poseCovThreshold: 0.1                       # m^2, threshold for using GPS data
+  poseCovThreshold: 0.5                       # m^2, threshold for using GPS data
   
   # Export settings
   savePCD: true                                         # https://github.com/TixiaoShan/LIO-SAM/issues/3
-  savePCDDirectory: "/workspace/my_lio_sam/map_cheku/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
+  savePCDDirectory: "/my_lio_sam/map/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
 
   # N_SCAN: 128                                 # number of lidar channel (i.e., 16, 32, 64, 128)
   # Horizon_SCAN: 1800                          # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048)
@@ -51,7 +51,7 @@ lio_sam:
   N_SCAN: 128                                   # number of lidar channel (i.e., 16, 32, 64, 128)
   Horizon_SCAN: 1800                            # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048) rslidar: 2000
   timeField: "timestamp"                        # point timestamp field, Velodyne - "time", Ouster - "t"
-  downsampleRate: 1                             # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1 
+  downsampleRate: 2                             # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1 
   
   # # my_robot Sensor Settings
   # N_SCAN: 16                                  # number of lidar channel (i.e., 16, 32, 64, 128)
@@ -130,9 +130,9 @@ lio_sam:
 
 
   # voxel filter paprams  rslidar16    0.2 0.1 0.2
-  odometrySurfLeafSize: 0.4                 # default: 0.4 - outdoor, 0.2 - indoor 特征提取用到的对面点的降采样率
-  mappingCornerLeafSize: 0.2                # default: 0.2 - outdoor, 0.1 - indoor
-  mappingSurfLeafSize: 0.4                  # default: 0.4 - outdoor, 0.2 - indoor
+  odometrySurfLeafSize: 0.2                 # default: 0.4 - outdoor, 0.2 - indoor 特征提取用到的对面点的降采样率
+  mappingCornerLeafSize: 0.1                # default: 0.2 - outdoor, 0.1 - indoor
+  mappingSurfLeafSize: 0.2                  # default: 0.4 - outdoor, 0.2 - indoor
 
   # robot motion constraint (in case you are using a 2D robot)
   z_tollerance: 1                 # meters   default 1000
@@ -140,7 +140,7 @@ lio_sam:
 
   # CPU Params
   numberOfCores: 8                            # number of cores for mapping optimization
-  mappingProcessInterval: 0.0            # seconds, regulate mapping frequency   default： 0.15
+  mappingProcessInterval: 0.15            # seconds, regulate mapping frequency   default： 0.15
 
   # Surrounding map
   surroundingkeyframeAddingDistThreshold: 1.0   # meters, regulate keyframe adding threshold
