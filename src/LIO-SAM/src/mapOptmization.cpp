@@ -19,6 +19,10 @@
 #include <gtsam/nonlinear/ISAM2.h>
 #include "sophus/so3.hpp"
 
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+
 using namespace gtsam;
 
 using symbol_shorthand::B; // Bias  (ax,ay,az,gx,gy,gz)
@@ -91,8 +95,10 @@ public:
     ISAM2 *isam;              // 优化器推理算法
     Values isamCurrentEstimate;
     Eigen::MatrixXd poseCovariance; // 优化后的上一关键帧位姿协方差
+    std_msgs::Header cloudHeader;
 
     ros::Publisher pubLaserCloudSurround;
+    ros::Publisher pubLaserCloudSurroundRGB;
     ros::Publisher pubLaserOdometryGlobal;
     ros::Publisher pubLaserOdometryIncremental;
     ros::Publisher pubKeyPoses;
@@ -109,6 +115,9 @@ public:
     ros::Subscriber subRawCloud; // my addition 去完畸变后的原始点云
     ros::Subscriber subGPS;      // 输入gps
     ros::Subscriber subLoop;     // 输入闭环
+    ros::Subscriber subcameraImage;
+
+    ros::Subscriber subLaserCloudInfo;
 
     std::deque<nav_msgs::Odometry> gpsQueue; // GPS队列
     lio_sam::cloud_info cloudInfo;           // 用来存储topic接收的点云
@@ -116,16 +125,23 @@ public:
     vector<pcl::PointCloud<PointType>::Ptr> cornerCloudKeyFrames; // 当某一帧被选为关键帧之后，他的scan经过降采样作为cornerCloudKeyFrames
     vector<pcl::PointCloud<PointType>::Ptr> surfCloudKeyFrames;
 
+    vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cornerCloudKeyFramesRGB; // 当某一帧被选为关键帧之后，他的scan经过降采样作为cornerCloudKeyFrames
+    vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> surfCloudKeyFramesRGB;
+
     pcl::PointCloud<PointType>::Ptr cloudKeyPoses3D;     // gtsam优化后的地图关键帧位置(x，y，z)
     pcl::PointCloud<PointTypePose>::Ptr cloudKeyPoses6D; //优化后的地图关键帧位置（x，y，z，R, P,Y，time）
     pcl::PointCloud<PointType>::Ptr copy_cloudKeyPoses3D;
     pcl::PointCloud<PointTypePose>::Ptr copy_cloudKeyPoses6D;
 
-    pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;   // topic接收到的角点点云,当前点云 corner feature set from odoOptimization
-    pcl::PointCloud<PointType>::Ptr laserCloudSurfLast;     // topic接收到的平面点云surf feature set from odoOptimization
-    pcl::PointCloud<PointType>::Ptr laserCloudCornerLastDS; // downsampled corner featuer set from odoOptimization
-    pcl::PointCloud<PointType>::Ptr laserCloudSurfLastDS;   // downsampled surf featuer set from odoOptimization
-    pcl::PointCloud<PointType>::Ptr laserCloudInRaw;        // 当前真在被处理的原始点云
+    pcl::PointCloud<PointType>::Ptr laserCloudCornerLast;    // topic接收到的角点点云,当前点云 corner feature set from odoOptimization
+    pcl::PointCloud<PointType>::Ptr laserCloudSurfLast;      // topic接收到的平面点云surf feature set from odoOptimization
+    pcl::PointCloud<PointType>::Ptr laserCloudCornerLastRGB; // downsampled corner featuer set from odoOptimization
+    pcl::PointCloud<PointType>::Ptr laserCloudSurfLastRGB;   // downsampled surf featuer set from odoOptimization
+    pcl::PointCloud<PointType>::Ptr laserCloudCornerLastDS;  // downsampled corner featuer set from odoOptimization
+    pcl::PointCloud<PointType>::Ptr laserCloudSurfLastDS;    // downsampled surf featuer set from odoOptimization
+    pcl::PointCloud<PointType>::Ptr laserCloudInRaw;         // 当前真在被处理的原始点云
+
+    pcl::PointCloud<PointType>::Ptr extractedCloud; // 输入的去畸变后的点云
 
     pcl::PointCloud<PointType>::Ptr laserCloudOri; // 经过筛选的可以用于匹配的点
     pcl::PointCloud<PointType>::Ptr coeffSel;      // 优化方向的向量的系数
@@ -137,7 +153,7 @@ public:
     std::vector<PointType> coeffSelSurfVec;
     std::vector<bool> laserCloudOriSurfFlag;
 
-    map<int, pair<pcl::PointCloud<PointType>, pcl::PointCloud<PointType>>> laserCloudMapContainer; //地图容器 ，first是索引，second是角点地图和平面地图
+    map<int, pair<pcl::PointCloud<PointType>, pcl::PointCloud<PointType>>> laserCloudMapContainer; // 地图容器 ，first是索引，second是角点地图和平面地图
     pcl::PointCloud<PointType>::Ptr laserCloudCornerFromMap;                                       // 从地图中提取的除当前帧外的当前帧的周围点云
     pcl::PointCloud<PointType>::Ptr laserCloudSurfFromMap;                                         // 从地图中提取的除当前帧外的当前帧的周围点云
     pcl::PointCloud<PointType>::Ptr laserCloudCornerFromMapDS;                                     // 上面的降采样
@@ -165,6 +181,9 @@ public:
     bool isDegenerate = false;
     Eigen::Matrix<float, 6, 6> matP;
 
+    int image_height;
+    int image_width;
+
     int laserCloudCornerFromMapDSNum = 0;
     int laserCloudSurfFromMapDSNum = 0;
     int laserCloudCornerLastDSNum = 0;
@@ -183,6 +202,13 @@ public:
     Eigen::Affine3f transPointAssociateToMap;       // transformTobeMapped的矩阵形式
     Eigen::Affine3f incrementalOdometryAffineFront; // save current transformation before any processing 相当于slam里程计值
     Eigen::Affine3f incrementalOdometryAffineBack;  //  经过scan2map优化后的值，又经过了imu差值后的值
+
+    cv::Mat camera_intrinsic_value; // 相机内参
+    cv::Mat distortion_coefficients;
+    cv::Mat lidar2cam_RT; // lidar->camera
+
+    cv::Mat raw_image;
+    cv::Mat current_image_frame; // 当前图片帧
 
     // SC loop detector
     SCManager scManager;
@@ -214,6 +240,7 @@ public:
 
         pubKeyPoses = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/trajectory", 1); // 发布关键帧点云
         pubLaserCloudSurround = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/map_global", 1);
+        pubLaserCloudSurroundRGB = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/color_map_global", 1);
         pubLaserOdometryGlobal = nh.advertise<nav_msgs::Odometry>("lio_sam/mapping/odometry", 1);                  // 全局里程计，有优化
         pubLaserOdometryIncremental = nh.advertise<nav_msgs::Odometry>("lio_sam/mapping/odometry_incremental", 1); // 发布增量里程计，不受闭环优化等的影响，只用来算增量，是为了防止在算增量过程中发生优化，导致增量出错
         pubPath = nh.advertise<nav_msgs::Path>("lio_sam/mapping/path", 1);                                         // 发布路径
@@ -222,6 +249,8 @@ public:
         subGPS = nh.subscribe<nav_msgs::Odometry>(gpsTopic, 200, &mapOptimization::gpsHandler, this, ros::TransportHints().tcpNoDelay());
         subLoop = nh.subscribe<std_msgs::Float64MultiArray>("lio_loop/to_be_added", 1, &mapOptimization::loopInfoHandler, this, ros::TransportHints().tcpNoDelay());
         subRawCloud = nh.subscribe<sensor_msgs::PointCloud2>("lio_sam/deskew/cloud_deskewed", 1, &mapOptimization::RawlaserCloudInfoHandler, this, ros::TransportHints().tcpNoDelay());
+        subcameraImage = nh.subscribe<sensor_msgs::Image>("/wideangle/image_color", 1, &mapOptimization::cameraImageCallback, this, ros::TransportHints().tcpNoDelay());
+        subLaserCloudInfo = nh.subscribe<lio_sam::cloud_info>("lio_sam/deskew/cloud_info", 1, &mapOptimization::laserCloudHandler, this, ros::TransportHints().tcpNoDelay());
 
         pubHistoryKeyFrames = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/icp_loop_closure_history_cloud", 1);     // 历史闭环帧附件的点云
         pubIcpKeyFrames = nh.advertise<sensor_msgs::PointCloud2>("lio_sam/mapping/icp_loop_closure_corrected_cloud", 1);       // 闭环矫正后的当前帧点云
@@ -235,6 +264,12 @@ public:
         downSizeFilterSurf.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);
         downSizeFilterICP.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);
         downSizeFilterSurroundingKeyPoses.setLeafSize(surroundingKeyframeDensity, surroundingKeyframeDensity, surroundingKeyframeDensity); // for surrounding key poses of scan-to-map optimization
+
+        camera_intrinsic_value = (cv::Mat_<double>(3, 3) << 1459.709433, 0.000000, 963.971858, 0.000000, 1457.876069, 632.135856, 0.000000, 0.000000, 1.000000);
+        distortion_coefficients = (cv::Mat_<double>(1, 5) << 0.014973, -0.004613, 0.001171, -0.000469, 0.000000);
+        lidar2cam_RT = (cv::Mat_<double>(3, 4) << 0.991934, 0.125705, -0.0163415, -0.02173,
+                        -0.019153, 0.021165, -0.999589, -0.0815692,
+                        -0.125345, 0.991838, 0.0234122, -0.0158328);
 
         allocateMemory();
         if (mintialMethod == human)
@@ -252,12 +287,16 @@ public:
         kdtreeSurroundingKeyPoses.reset(new pcl::KdTreeFLANN<PointType>());
         kdtreeHistoryKeyPoses.reset(new pcl::KdTreeFLANN<PointType>());
 
-        laserCloudCornerLast.reset(new pcl::PointCloud<PointType>());   // corner feature set from odoOptimization
-        laserCloudSurfLast.reset(new pcl::PointCloud<PointType>());     // surf feature set from odoOptimization
-        laserCloudCornerLastDS.reset(new pcl::PointCloud<PointType>()); // downsampled corner featuer set from odoOptimization
-        laserCloudSurfLastDS.reset(new pcl::PointCloud<PointType>());   // downsampled surf featuer set from odoOptimization
+        laserCloudCornerLast.reset(new pcl::PointCloud<PointType>());    // corner feature set from odoOptimization
+        laserCloudSurfLast.reset(new pcl::PointCloud<PointType>());      // surf feature set from odoOptimization
+        laserCloudCornerLastRGB.reset(new pcl::PointCloud<PointType>()); // corner feature set from odoOptimization
+        laserCloudSurfLastRGB.reset(new pcl::PointCloud<PointType>());   // surf feature set from odoOptimization
+        laserCloudCornerLastDS.reset(new pcl::PointCloud<PointType>());  // downsampled corner featuer set from odoOptimization
+        laserCloudSurfLastDS.reset(new pcl::PointCloud<PointType>());    // downsampled surf featuer set from odoOptimization
         laserCloudInRaw.reset(new pcl::PointCloud<PointType>());
         laserCloudInRaw->clear();
+
+        extractedCloud.reset(new pcl::PointCloud<PointType>());
 
         laserCloudOri.reset(new pcl::PointCloud<PointType>());
         coeffSel.reset(new pcl::PointCloud<PointType>());
@@ -437,6 +476,26 @@ public:
         pcl::fromROSMsg(*RawlaserCloudMsg, *laserCloudInRaw);
     }
 
+    void cameraImageCallback(const sensor_msgs::Image::ConstPtr &image_msg)
+    {
+        cv_bridge::CvImagePtr cv_image = cv_bridge::toCvCopy(image_msg, "bgr8");
+        raw_image = cv_image->image;
+        //图像去畸变, 使用相机内参和畸变系数可以图像去畸变
+        if (true)
+            cv::undistort(raw_image, current_image_frame, camera_intrinsic_value, distortion_coefficients);
+        else //如果接口获取的图像已经做了去畸变处理,不用在处理
+            current_image_frame = raw_image;
+        // std::cout << "图像去畸变" << std::endl;
+    }
+
+    void laserCloudHandler(const lio_sam::cloud_infoConstPtr &msgIn)
+    {
+        cloudHeader = msgIn->header;                             // new cloud header
+        pcl::fromROSMsg(msgIn->cloud_deskewed, *extractedCloud); // new cloud for extraction
+
+        pcl::copyPointCloud(*extractedCloud, *laserCloudCornerLastRGB);
+    }
+
     int initial_count = 0;
     void laserCloudInfoHandler(const lio_sam::cloud_infoConstPtr &msgIn)
     {
@@ -611,9 +670,9 @@ public:
 
         Eigen::Affine3f transCur = pcl::getTransformation(transformIn->x, transformIn->y, transformIn->z, transformIn->roll, transformIn->pitch, transformIn->yaw);
 
-        // https://blog.csdn.net/bigFatCat_Tom/article/details/98493040
-        // 使用多线程并行加速
-        #pragma omp parallel for num_threads(numberOfCores)
+// https://blog.csdn.net/bigFatCat_Tom/article/details/98493040
+// 使用多线程并行加速
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < cloudSize; ++i)
         {
             pointFrom = &cloudIn->points[i];
@@ -621,6 +680,34 @@ public:
             cloudOut->points[i].y = transCur(1, 0) * pointFrom->x + transCur(1, 1) * pointFrom->y + transCur(1, 2) * pointFrom->z + transCur(1, 3);
             cloudOut->points[i].z = transCur(2, 0) * pointFrom->x + transCur(2, 1) * pointFrom->y + transCur(2, 2) * pointFrom->z + transCur(2, 3);
             cloudOut->points[i].intensity = pointFrom->intensity;
+        }
+        return cloudOut;
+    }
+
+    // 对输入点云进行位姿变换
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr transformPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn, PointTypePose *transformIn)
+    {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudOut(new pcl::PointCloud<pcl::PointXYZRGB>());
+
+        pcl::PointXYZRGB *pointFrom;
+
+        int cloudSize = cloudIn->size();
+        cloudOut->resize(cloudSize);
+
+        Eigen::Affine3f transCur = pcl::getTransformation(transformIn->x, transformIn->y, transformIn->z, transformIn->roll, transformIn->pitch, transformIn->yaw);
+
+// https://blog.csdn.net/bigFatCat_Tom/article/details/98493040
+// 使用多线程并行加速
+#pragma omp parallel for num_threads(numberOfCores)
+        for (int i = 0; i < cloudSize; ++i)
+        {
+            pointFrom = &cloudIn->points[i];
+            cloudOut->points[i].x = transCur(0, 0) * pointFrom->x + transCur(0, 1) * pointFrom->y + transCur(0, 2) * pointFrom->z + transCur(0, 3);
+            cloudOut->points[i].y = transCur(1, 0) * pointFrom->x + transCur(1, 1) * pointFrom->y + transCur(1, 2) * pointFrom->z + transCur(1, 3);
+            cloudOut->points[i].z = transCur(2, 0) * pointFrom->x + transCur(2, 1) * pointFrom->y + transCur(2, 2) * pointFrom->z + transCur(2, 3);
+            cloudOut->points[i].r = pointFrom->r;
+            cloudOut->points[i].g = pointFrom->g;
+            cloudOut->points[i].b = pointFrom->b;
         }
         return cloudOut;
     }
@@ -709,6 +796,9 @@ public:
         pcl::PointCloud<PointType>::Ptr globalSurfCloud(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr globalSurfCloudDS(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr globalMapCloud(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr globalMapCloudRGB(new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr globalCornerCloudRGB(new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr globalSurfCloudRGB(new pcl::PointCloud<pcl::PointXYZRGB>());
 
         // TODO 不是有个地图容器嘛，怎么还搞便利呀。不过这边建图都结束了倒也不在乎时间
         // 但是这样不会有很多重复的点嘛
@@ -716,6 +806,8 @@ public:
         {
             *globalCornerCloud += *transformPointCloud(cornerCloudKeyFrames[i], &cloudKeyPoses6D->points[i]);
             *globalSurfCloud += *transformPointCloud(surfCloudKeyFrames[i], &cloudKeyPoses6D->points[i]);
+            *globalCornerCloudRGB += *transformPointCloud(cornerCloudKeyFramesRGB[i], &cloudKeyPoses6D->points[i]);
+            *globalSurfCloudRGB += *transformPointCloud(surfCloudKeyFramesRGB[i], &cloudKeyPoses6D->points[i]);
             cout << "\r" << std::flush << "Processing feature cloud " << i << " of " << cloudKeyPoses6D->size() << " ...";
         }
         // down-sample and save corner cloud
@@ -731,9 +823,46 @@ public:
         // down-sample and save global point cloud map
         *globalMapCloud += *globalCornerCloud;
         *globalMapCloud += *globalSurfCloud;
+        *globalMapCloudRGB += *globalCornerCloudRGB;
+        *globalMapCloudRGB += *globalSurfCloudRGB;
         pcl::io::savePCDFileASCII(savePCDDirectory + "cloudGlobal.pcd", *globalMapCloud);
+        pcl::io::savePCDFileASCII(savePCDDirectory + "cloudGlobal_RGB.pcd", *globalMapCloudRGB);
         cout << "****************************************************" << endl;
         cout << "Saving map to pcd files completed" << endl;
+    }
+
+    void point2color(pcl::PointCloud<PointType>::Ptr in_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud)
+    {
+        // 单个彩色点: RGBXYZ
+        pcl::PointXYZRGB colored_3d_point;
+        pcl::PointXYZ camera_point;
+        int rows = raw_image.rows;
+        int cols = raw_image.cols;
+        for (int i = 0; i < in_cloud->points.size(); i++)
+        {
+            //把点云里面的3D坐标从点云坐标系,变换到摄像机的坐标系[x',y',z']
+            cv::Mat point = (cv::Mat_<double>(4, 1) << in_cloud->points[i].x, in_cloud->points[i].y, in_cloud->points[i].z, 1);
+            cv::Mat p_result(3, 1, CV_64F);
+
+            p_result = camera_intrinsic_value * lidar2cam_RT * point;
+
+            double p_w = p_result.at<double>(0, 2);
+            int p_u = (int)((p_result.at<double>(0, 0)) / p_w);
+            int p_v = (int)((p_result.at<double>(0, 1)) / p_w);
+            // std::cout << p_v << p_u << std::endl;
+            if ((p_u < 0) || (p_u > cols) || (p_v < 0) || (p_v > rows) || (p_w < 0))
+            {
+                continue;
+            }
+            colored_3d_point.x = in_cloud->points[i].x;
+            colored_3d_point.y = in_cloud->points[i].y;
+            colored_3d_point.z = in_cloud->points[i].z;
+            colored_3d_point.r = raw_image.at<cv::Vec3b>(p_v, p_u)[2]; // not (p_u,p_v)!
+            colored_3d_point.g = raw_image.at<cv::Vec3b>(p_v, p_u)[1];
+            colored_3d_point.b = raw_image.at<cv::Vec3b>(p_v, p_u)[0];
+
+            out_cloud->push_back(colored_3d_point);
+        }
     }
 
     void publishGlobalMap()
@@ -745,11 +874,13 @@ public:
             return;
 
         pcl::KdTreeFLANN<PointType>::Ptr kdtreeGlobalMap(new pcl::KdTreeFLANN<PointType>());
-        
+
         pcl::PointCloud<PointType>::Ptr globalMapKeyPoses(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr globalMapKeyPosesDS(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr globalMapKeyFrames(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr globalMapKeyFramesDS(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr globalMapKeyFramesRGB(new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr globalMapKeyFramesRGBDS(new pcl::PointCloud<pcl::PointXYZRGB>());
 
         // kd-tree to find near key frames to visualize
         std::vector<int> pointSearchIndGlobalMap;
@@ -776,13 +907,23 @@ public:
             int thisKeyInd = (int)globalMapKeyPosesDS->points[i].intensity;
             *globalMapKeyFrames += *transformPointCloud(cornerCloudKeyFrames[thisKeyInd], &cloudKeyPoses6D->points[thisKeyInd]);
             *globalMapKeyFrames += *transformPointCloud(surfCloudKeyFrames[thisKeyInd], &cloudKeyPoses6D->points[thisKeyInd]);
+            *globalMapKeyFramesRGB += *transformPointCloud(cornerCloudKeyFramesRGB[thisKeyInd], &cloudKeyPoses6D->points[thisKeyInd]);
+            *globalMapKeyFramesRGB += *transformPointCloud(surfCloudKeyFramesRGB[thisKeyInd], &cloudKeyPoses6D->points[thisKeyInd]);
         }
+
         // downsample visualized points
         pcl::VoxelGrid<PointType> downSizeFilterGlobalMapKeyFrames;                                                                                   // for global map visualization
         downSizeFilterGlobalMapKeyFrames.setLeafSize(globalMapVisualizationLeafSize, globalMapVisualizationLeafSize, globalMapVisualizationLeafSize); // for global map visualization
         downSizeFilterGlobalMapKeyFrames.setInputCloud(globalMapKeyFrames);
         downSizeFilterGlobalMapKeyFrames.filter(*globalMapKeyFramesDS);
+
+        // pcl::VoxelGrid<pcl::PointXYZRGB> downSizeFilterGlobalMapKeyFramesRGB;                                                                                   // for global map visualization
+        // downSizeFilterGlobalMapKeyFramesRGB.setLeafSize(globalMapVisualizationLeafSize, globalMapVisualizationLeafSize, globalMapVisualizationLeafSize); // for global map visualization
+        // downSizeFilterGlobalMapKeyFramesRGB.setInputCloud(globalMapKeyFramesRGB);
+        // downSizeFilterGlobalMapKeyFramesRGB.filter(*globalMapKeyFramesRGBDS);
+
         publishCloud(&pubLaserCloudSurround, globalMapKeyFramesDS, timeLaserInfoStamp, odometryFrame);
+        publishColorCloud(&pubLaserCloudSurroundRGB, globalMapKeyFramesRGB, timeLaserInfoStamp, odometryFrame);
     }
 
     void loopClosureThread()
@@ -1447,11 +1588,13 @@ public:
         downSizeFilterCorner.setInputCloud(laserCloudCornerLast);
         downSizeFilterCorner.filter(*laserCloudCornerLastDS);
         laserCloudCornerLastDSNum = laserCloudCornerLastDS->size();
+        // pcl::copyPointCloud(*laserCloudCornerLast, *laserCloudCornerLastRGB);
 
         laserCloudSurfLastDS->clear();
         downSizeFilterSurf.setInputCloud(laserCloudSurfLast);
         downSizeFilterSurf.filter(*laserCloudSurfLastDS);
         laserCloudSurfLastDSNum = laserCloudSurfLastDS->size();
+        pcl::copyPointCloud(*laserCloudSurfLast, *laserCloudSurfLastRGB);
     }
 
     // 更新lidar->map 的变换矩阵
@@ -1471,7 +1614,7 @@ public:
     {
         updatePointAssociateToMap();
 
-        #pragma omp parallel for num_threads(numberOfCores)
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < laserCloudCornerLastDSNum; i++)
         {
             PointType pointOri, pointSel, coeff;
@@ -1609,7 +1752,7 @@ public:
     {
         updatePointAssociateToMap();
 
-        #pragma omp parallel for num_threads(numberOfCores)
+#pragma omp parallel for num_threads(numberOfCores)
         for (int i = 0; i < laserCloudSurfLastDSNum; i++)
         {
             PointType pointOri, pointSel, coeff;
@@ -1884,7 +2027,6 @@ public:
         }
         return false; // keep optimizing
     }
-
 
     // scan2map匹配优化
     void scan2MapOptimization()
@@ -2397,6 +2539,8 @@ public:
         // save all the received edge and surf points
         pcl::PointCloud<PointType>::Ptr thisCornerKeyFrame(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr thisSurfKeyFrame(new pcl::PointCloud<PointType>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisCornerKeyFrameRGB(new pcl::PointCloud<pcl::PointXYZRGB>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisSurfKeyFrameRGB(new pcl::PointCloud<pcl::PointXYZRGB>());
         pcl::copyPointCloud(*laserCloudCornerLastDS, *thisCornerKeyFrame);
         pcl::copyPointCloud(*laserCloudSurfLastDS, *thisSurfKeyFrame);
 
@@ -2410,9 +2554,18 @@ public:
         // scManager.makeAndSaveScancontextAndKeys(*thisCloudKeyFrame);
         scManager.makeAndSaveScancontextAndKeys(*laserCloudInRaw);
 
+        point2color(laserCloudCornerLastRGB, thisCornerKeyFrameRGB);
+        point2color(laserCloudSurfLastRGB, thisSurfKeyFrameRGB);
+
+        std::cout << "thisCornerKeyFrameRGB: " << thisCornerKeyFrameRGB->size() << std::endl;
+        std::cout << "thisSurfKeyFrameRGB: " << thisSurfKeyFrameRGB->size() << std::endl;
+
         // save key frame cloud
         cornerCloudKeyFrames.push_back(thisCornerKeyFrame);
         surfCloudKeyFrames.push_back(thisSurfKeyFrame);
+
+        cornerCloudKeyFramesRGB.push_back(thisCornerKeyFrameRGB);
+        surfCloudKeyFramesRGB.push_back(thisSurfKeyFrameRGB);
 
         // save path for visualization
         // 发布关键帧路径

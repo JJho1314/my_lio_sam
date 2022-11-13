@@ -30,7 +30,7 @@ else()
     message(STATUS "Coulid not find OpenMP")
 endif()
 find_package(PCL REQUIRED QUIET)
-find_package(OpenCV REQUIRED QUIET)
+find_package(OpenCV 3.4 REQUIRED)
 find_package(GTSAM REQUIRED QUIET)
 
 add_message_files(

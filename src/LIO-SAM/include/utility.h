@@ -384,6 +384,33 @@ sensor_msgs::PointCloud2 publishCloud(ros::Publisher *thisPub, pcl::PointCloud<P
     return tempCloud;
 }
 
+/**
+ * @details 发布点云
+ * @param thisPub 发布者
+ * @param thisCloud 点云指针
+ * @param thisStamp 时间戳
+ * @param thisFrame 坐标系
+ * @return thisCloud对应的ros点云
+ */
+sensor_msgs::PointCloud2 publishColorCloud(ros::Publisher *thisPub, pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisCloud, ros::Time thisStamp, std::string thisFrame)
+{
+    sensor_msgs::PointCloud2 tempCloud;
+    pcl::toROSMsg(*thisCloud, tempCloud);
+    tempCloud.header.stamp = thisStamp;
+    tempCloud.header.frame_id = thisFrame;
+    if (thisPub->getNumSubscribers() != 0)
+        thisPub->publish(tempCloud);
+    return tempCloud;
+}
+
+// sensor_msgs::ImagePtr publishimg(ros::Publisher *thisPub, cv::Mat thisimg, ros::Time thisStamp, std::string thisFrame)
+// {
+//     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisimg).toImageMsg();
+//     if (thisPub->getNumSubscribers() != 0)
+//         thisPub->publish(msg);
+//     return msg;
+// }
+
 //获取msg的时间
 template <typename T>
 double ROS_TIME(T msg)
